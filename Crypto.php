@@ -36,25 +36,28 @@ class Crypto
         //Countinue till have visited all rows.
         $column = 0;
         $row = 0;
-        $current_string_length = strlen($arr[$row]); //O(1)
         $ret_str = "";
 
         while ($row < $data_length) {
 
+            $current_string_length = strlen($arr[$row]);
+
             //Jump directly to next iteration if column is ahead current string length (have already visited this column)
-            if ($column > $current_string_length) {
+            if ($column >= $current_string_length) {
                 $row++;
                 continue;
             }
 
             //Add space before always except start.
+            echo("we are at word $arr[$row], row $row column $column and length is $current_string_length\n");
             if ($column !== 0) {
                 $ret_str .= " ";
             }
 
             $current_char = $arr[$row][$column];
 
-            //check if current char is mb and if it's, remove positions from $current_string_length. Useful because $current_string_length tracks current word length.
+            //check if current char is mb and if it's, remove positions from $current_string_length.
+            //Useful because $current_string_length tracks current word length.
             if (MultiByteHelper::is_multi_byte($current_char)) {
                 //if it's, remove n from $current_string_length
                 $current_string_length -= MultiByteHelper::get_positions($current_char);
@@ -68,9 +71,10 @@ class Crypto
                 //Get character at correct position assuming it may be multibyte.
                 $char = MultiByteHelper::get_character($element, $column);
 
-                //if it's multibyte, replace mb with '' so next characters will be at correct position.
+                //if it's multibyte, replace mb with a placeholder (in this case 'n')
+                //so next characters will be at correct position.
                 if (MultiByteHelper::is_multi_byte($char)) {
-                    $arr[$i] = substr_replace($element, '', $column, MultiByteHelper::get_positions($char));
+                    $arr[$i] = substr_replace($element, 'n', $column, MultiByteHelper::get_positions($char));
                 }
 
                 $ret_str .= $char;

@@ -1,6 +1,7 @@
 <?php
 
 require_once('./Crypto.php');
+require_once('./Compression.php');
 
 /**
 * Check if data has expcected conditions
@@ -32,6 +33,7 @@ function check_data(string $data) : void
 }
 
 $data = "am生et l生orem ipsu生m do生lor生 s生it";
+// $data = "amet lorem ipsum dolor sit";
 
 check_data($data);
 
@@ -39,7 +41,10 @@ $obfuscated_data = Crypto::box_column_obfuscate($data);
 
 echo "Data given : $data \n";
 echo "Obfuscated data : ";
-
 var_dump($obfuscated_data);
+
+$compressed_data = Compression::ascii_controls_compression($obfuscated_data);
+echo "Compressed data : ";
+var_dump($compressed_data);
     
 ?>
