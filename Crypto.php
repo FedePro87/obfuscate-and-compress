@@ -49,7 +49,6 @@ class Crypto
             }
 
             //Add space before always except start.
-            echo("we are at word $arr[$row], row $row column $column and length is $current_string_length\n");
             if ($column !== 0) {
                 $ret_str .= " ";
             }
@@ -71,8 +70,7 @@ class Crypto
                 //Get character at correct position assuming it may be multibyte.
                 $char = MultiByteHelper::get_character($element, $column);
 
-                //if it's multibyte, replace mb with a placeholder (in this case 'n')
-                //so next characters will be at correct position.
+                //if it's multibyte, replace mb with a placeholder (in this case 'n') so next characters will be at correct position.
                 if (MultiByteHelper::is_multi_byte($char)) {
                     $arr[$i] = substr_replace($element, 'n', $column, MultiByteHelper::get_positions($char));
                 }

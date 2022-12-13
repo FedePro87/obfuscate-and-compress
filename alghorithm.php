@@ -1,5 +1,13 @@
 <?php
 
+$debug = getenv('DEBUG') ?? false;
+
+if($debug){
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+}
+
 require_once('./Crypto.php');
 require_once('./Compression.php');
 
@@ -32,19 +40,28 @@ function check_data(string $data) : void
 
 }
 
-$data = "am生et l生orem ipsu生m do生lor生 s生it";
-// $data = "amet lorem ipsum dolor sit";
+$data = "am生et lm生rem ipsu生m do生lor生 s生生t";
+echo "Data given : $data \n";
 
 check_data($data);
 
 $obfuscated_data = Crypto::box_column_obfuscate($data);
 
-echo "Data given : $data \n";
 echo "Obfuscated data : ";
 var_dump($obfuscated_data);
 
+echo("Word to compress: $obfuscated_data\n");
+
+$time_start = microtime(true);
 $compressed_data = Compression::ascii_controls_compression($obfuscated_data);
 echo "Compressed data : ";
 var_dump($compressed_data);
-    
+
+$time_end = microtime(true);
+
+if($debug){
+    $execution_time = $time_end - $time_start;
+    echo 'Total Execution Time: '.$execution_time.' Mins';
+}
+
 ?>
