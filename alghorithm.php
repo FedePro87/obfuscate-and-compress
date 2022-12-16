@@ -15,7 +15,9 @@ require_once('./Compression.php');
 * Check if data has expcected conditions
 * @param string $data
 * @throws Exception If is not a string
-* @throws Exception If string has no chars
+* @throws Exception If string has no char
+* @throws Exception If string has only spaces
+* @throws Exception If string contains ASCII chars 0-31
 * @throws Exception If length is more then 1_000_000_000
 */
 function check_data(string $data) : void
@@ -34,13 +36,27 @@ function check_data(string $data) : void
         throw new Exception("String provided must have at least one character");
     }
 
+    //must not contain only spaces.
+    if (strlen(trim($data)) === 0){
+        throw new Exception("String can't contain only spaces");
+    }
+
+    //must not contain any umprintable char.
+    $check_printable = preg_replace('/[\x00-\x1F]/u', '', $data);
+    $check_printable_length = mb_strlen($check_printable);
+
+    if($check_printable_length < $data_length){
+        throw new Exception("String provided has umprintable ASCII characters from 0 to 31");
+    }
+
     if($data_length > 1_000_000_000) {
         throw new Exception("String provided is loo long and must be max 1_000_000_000(included)");
     }
 
 }
 
-$data = "am生et lm生rem ipsu生m do生lor生 s生生t";
+// $data = "am生et lm生rem ipsu生m do生lor生 s生生t";
+$data = "aaaaaaaaaaaaaaaaaaa ciao";
 echo "Data given : $data \n";
 
 check_data($data);
@@ -61,7 +77,7 @@ $time_end = microtime(true);
 
 if($debug){
     $execution_time = $time_end - $time_start;
-    echo 'Total Execution Time: '.$execution_time.' Mins';
+    echo 'Total Compression Execution Time: '.$execution_time.' Mins';
 }
 
 ?>

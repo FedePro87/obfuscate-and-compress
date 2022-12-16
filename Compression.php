@@ -38,8 +38,11 @@ class Compression
         foreach ($matches as &$match) {
             $pattern = $match[0];
 
-            //key_exists would be better to prevent Undefined array key, but it's O(n) in worst case.
-            $most_recurring_patterns[$pattern] += 1;
+            if (key_exists($pattern, $most_recurring_patterns)) {
+                $most_recurring_patterns[$pattern] += 1;
+            } else {
+                $most_recurring_patterns[$pattern] = 1;
+            }
         }
 
         //sort.
