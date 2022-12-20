@@ -1,9 +1,95 @@
 <?php
 require_once('./Ascii.php');
-require_once('./RegexHelper.php');
 
 class Compression
 {
+
+    /**
+     * find patterns in a word visualizing it as a serie of words divided by a space.
+     * sort already while building
+     * @param string $data
+     * @return array at least 31 most recurring patterns
+     */
+    public static function quadratic_matches(string $data): array
+    {
+        $data_length = strlen($data);
+        $pattern = "";
+        $max_pattern = 0;
+
+        //key is pattern, value is how many times a pattern repeats.
+        //is used to track previous patterns, and values in pattern is used to find where this pattern is positioned in $most_recurring_patterns
+        $matches = array();
+
+        //key is how many times a pattern repeats, value is another map with pattern itself and how many times it repeats.
+        //is used to arrange (so sort) repeating patterns
+        $most_recurring_patterns = array();
+
+        //Parse $pattern until it finds a space.
+        for ($i = 0; $i < $data_length; $i++) {
+            $char = $data[$i];
+
+            //if it's multibyte, get char and increment i by more positions occupied by mb char.
+            if (MultiByteHelper::is_multi_byte($char)) {
+                $char = MultiByteHelper::get_character($data, $i);
+                $more_positions = MultiByteHelper::get_positions($char);
+                $i += ($more_positions - 1);
+            }
+
+            //If this is a space, add $pattern to $matches if it doesn't exists, else add +1
+            $char_length = strlen(trim($char));
+
+            //Add to patterns if reached space or reached end of string.
+            if ($char_length < 1 || $i === ($data_length - 1)) {
+
+                //If it's on last char, don't forget to add it to pattern.
+                if ($i === ($data_length - 1)) {
+                    $pattern .= $char;
+                }
+
+                //If $pattern was already found, increment its value in $matches by 1 then manage it in $recurring_patterns as well.
+                if (key_exists($pattern, $matches)) {
+                    $previous_recurring_position = $matches[$pattern];
+                    $matches[$pattern] += 1;
+                    $current_recurring_position = $matches[$pattern];
+                    unset($most_recurring_patterns[$previous_recurring_position][$pattern]);
+                    $most_recurring_patterns[$current_recurring_position][$pattern] = $current_recurring_position;
+
+                    if ($current_recurring_position > $max_pattern) {
+                        $max_pattern = $current_recurring_position;
+                    }
+                } else {
+                    $matches[$pattern] = 1;
+                    $most_recurring_patterns[1][$pattern] = 1;
+                }
+
+                $pattern = "";
+            } else {
+                $pattern .= $char;
+            }
+        }
+
+        //Only a restricted number of patterns are needed (in our case 31). Take only those and return a sorted array with first (max) 31 recurring.
+        //$max_pattern is the pattern with more occurances in the word.
+        $sorted_restricted_patterns = array();
+        $added_patterns = 0;
+
+        for ($i = $max_pattern; $i > 0; $i--) {
+
+            //If some of the occurances were unset in previous stage, this array will be empty.
+            $patterns = $most_recurring_patterns[$i];
+
+            foreach ($patterns as $pattern => $occurances) {
+                $sorted_restricted_patterns[] = $pattern;
+                $added_patterns++;
+
+                if ($added_patterns > 31) {
+                    break;
+                }
+            }
+        }
+
+        return $sorted_restricted_patterns;
+    }
 
     /**
      * Parse the string (it may contains mb chars) for any recurring patterns and replace them with a non-printing character
@@ -23,83 +109,67 @@ class Compression
     {
         $ret_str = $data;
         $data_length = strlen($data);
-        $matches = RegexHelper::simple_double_pattern($data);
-
-        //Return directly given word if no matches.
-        $matches_number = count($matches); //O(1)
-
-        if ($matches_number < 1) {
-            return $data;
-        }
-
-        //Find out which are more recurring pattern.
-        $most_recurring_patterns = array();
-
-        foreach ($matches as &$match) {
-            $pattern = $match[0];
-
-            if (key_exists($pattern, $most_recurring_patterns)) {
-                $most_recurring_patterns[$pattern] += 1;
-            } else {
-                $most_recurring_patterns[$pattern] = 1;
-            }
-        }
-
-        //sort.
-        arsort($most_recurring_patterns); //O(n)
-
-        //take at least 31.
-        $most_recurring_patterns = array_slice($most_recurring_patterns, 0, 31); //O(offset + length), so 31
+        $most_recurring_patterns = Compression::quadratic_matches($data);
 
         $control_characters = Ascii::get_excaped_control_characters();
         $more_positions = 0;
+        $pattern = "";
+        $pattern_start = 0;
         $visited_patterns = array();
         $visited_control_characters = 0;
 
         for ($i = 0; $i < $data_length; $i++) {
-            //remember that char may be multibyte so get it with MultiByteHelper::get_character
-            $current_char = MultiByteHelper::get_character($data, $i);
+            $char = $data[$i];
 
-            //get current and next characters. Manage if any of them is multibyte.
-            //if $char is multibyte, go to next position adding positions occupied by this $char.
-            if (MultiByteHelper::is_multi_byte($current_char)) {
-                $i += (MultiByteHelper::get_positions($current_char) - 1);
+            //if pattern is empty, pattern starts here
+            $pattern_length = strlen(trim($pattern));
+
+            if ($pattern_length < 1) {
+                $pattern_start = $i;
             }
 
-            $next_char = MultiByteHelper::get_character($data, $i + 1);
-
-            //if current char or next char are spaces, ignore.
-            if (strlen(trim($current_char)) < 1 || strlen(trim($next_char)) < 1) {
-                continue;
+            //if it's multibyte, get char and increment i by more positions occupied by mb char.
+            if (MultiByteHelper::is_multi_byte($char)) {
+                $char = MultiByteHelper::get_character($data, $i);
+                $i += (MultiByteHelper::get_positions($char) - 1);
             }
 
-            //put them together and check if they exists in $most_recurring_patterns.
-            //if they exist substitute wit control char.
-            $current_pattern = $current_char . $next_char;
+            //If this is a space, take care of pattern and substitute with control char.
+            $char_length = strlen(trim($char));
 
-            //Without correct length (pattern may contain one one or more mb chars), $substr will take wrong offset.
-            $pattern_length = mb_strlen($current_pattern);
+            //Add to patterns if reached space or reached end of string.
+            if ($char_length < 1 || $i === ($data_length - 1)) {
 
-            //key_exists is O(n), but $control_chars_map has 31 length in worst case.
-            if (key_exists($current_pattern, $most_recurring_patterns)) {
+                //If it's on last char, don't forget to add it to pattern.
+                if ($i === ($data_length - 1)) {
+                    $pattern .= $char;
+                    $pattern_length += 1;
+                }
+            }
+
+            //key_exists is O(n), but $most_recurring_patterns has 31 length in worst case.
+            if (in_array($pattern, $most_recurring_patterns)) {
+
                 $control_character = "";
 
-                //ensure this pattern repeat at least two times
-                if ($most_recurring_patterns[$current_pattern] < 2) {
-                    continue;
-                }
-
                 //if this pattern has been already associated to a control character use it, else select next control character.
-                if (key_exists($current_pattern, $visited_patterns)) {
-                    $control_character = $visited_patterns[$current_pattern];
+                if (key_exists($pattern, $visited_patterns)) {
+                    $control_character = $visited_patterns[$pattern];
                 } else {
                     $control_character = $control_characters[$visited_control_characters];
-                    $visited_patterns[$current_pattern] = $control_character;
+                    $visited_patterns[$pattern] = $control_character;
                     $visited_control_characters++;
                 }
 
-                $ret_str = substr_replace($ret_str, $control_character, $i + $more_positions, $pattern_length);
-                $more_positions += (strlen($control_character) - mb_strlen($current_pattern));
+                //substitute starting with a offset of $pattern_start.
+                $control_character_length = strlen($control_character);
+                $ret_str = substr_replace($ret_str, $control_character, $pattern_start + $more_positions, $pattern_length);
+
+                $control_character_length = strlen($control_character);
+                $more_positions += ($control_character_length - $pattern_length);
+                $pattern = "";
+            } else {
+                $pattern .= $char;
             }
         }
 
