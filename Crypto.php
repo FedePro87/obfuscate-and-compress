@@ -31,7 +31,7 @@ class Crypto
         $row = 0;
         $column = 0;
 
-        //traverse string, adding each element to $column_strings depending on $cursor.
+        //traverse string, adding each element to $column_strings depending on $column.
         for ($i = 0; $i < $data_length; $i++) {
 
             //avoid spaces
@@ -48,10 +48,10 @@ class Crypto
                 $i += ($more_positions - 1);
             }
 
-            if(key_exists($row, $column_strings)) {
-                $column_strings[$row] .= $char;
+            if(key_exists($column, $column_strings)) {
+                $column_strings[$column] .= $char;
             } else {
-                $column_strings[$row] = $char;
+                $column_strings[$column] = $char;
             }
 
             $column++;
