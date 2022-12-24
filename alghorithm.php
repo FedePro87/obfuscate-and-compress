@@ -56,6 +56,7 @@ function check_data(string $data): void
 
 // $data = "am生et lm生rem ipsu生m do生lm生r e生生t";
 $data = "aaaaaaaaaaaaaaaaaaa ciao";
+// $data = "";
 echo "Data given : $data \n";
 
 check_data($data);
@@ -68,7 +69,7 @@ var_dump($obfuscated_data);
 echo ("Word to compress: $obfuscated_data\n");
 
 $time_start = microtime(true);
-$compressed_data = Compression::ascii_controls_compression($obfuscated_data);
+$compressed_data = Compression::ascii_controls_compression_alt($obfuscated_data);
 echo "Compressed data : ";
 var_dump($compressed_data);
 

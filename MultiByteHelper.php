@@ -50,6 +50,15 @@ class MultiByteHelper{
         return substr($word, $position, MultiByteHelper::get_positions($word[$position]));
     }
 
+    /**
+    * find if string is mb
+    * @param string $data
+    * @return bool string is mb.
+    */
+    public static function string_is_mb(string $data){
+        return mb_strlen($data) < strlen($data);
+    }
+
 }
 
 ?>

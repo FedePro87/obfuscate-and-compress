@@ -121,4 +121,61 @@ class Compression
 
         return $ret_str;
     }
+
+
+    public static function ascii_controls_compression_alt(string $data): string
+    {
+        $ret_str = $data;
+        $str_is_mb = MultiByteHelper::string_is_mb($data);
+        $matches = RegexHelper::char_repetition_pattern($data);
+
+        //key is pattern, value is how many times a pattern repeats. is used to track patterns occurances
+        $pattern_repeats = array();
+
+        //Desc sort $matches, considering first more occurring patterns.
+        for ($i = 0; $i < count($matches); $i++) {
+            $pattern = $matches[$i];
+            $pattern_string = $pattern[0];
+
+            if (key_exists($pattern_string, $pattern_repeats)) {
+                $previous_recurring_position = $pattern_repeats[$pattern_string];
+                $pattern_repeats[$pattern_string] += 1;
+                unset($pattern_repeats[$previous_recurring_position][$pattern_string]);
+            } else {
+                $pattern_repeats[$pattern_string] = 1;
+            }
+        }
+
+        //Take first 31, then flatten.
+        $pattern_repeats = array_slice($pattern_repeats, 0, 31);
+        $more_recurring_patterns = array();
+        array_walk_recursive($pattern_repeats, function ($repeats, $pattern) use (&$more_recurring_patterns) {
+            $more_recurring_patterns[] = $pattern;
+        });
+
+        //Associate pattern with control character while substitute patterns.
+        $control_characters = Ascii::get_excaped_control_characters();
+        $pattern = "";
+        $recurring_patterns_length = count($more_recurring_patterns);
+
+        //Traverse more_recurring_patterns
+        for ($i = 0; $i < $recurring_patterns_length; $i++) {
+
+            //traverse pattern positions
+            $pattern = $more_recurring_patterns[$i];
+
+            //pick control character
+            $control_character = $control_characters[$i];
+
+            if($str_is_mb){
+                $regex = "/" . $pattern . "/u";
+                $ret_str = preg_replace($regex, $control_character, $ret_str);
+            } else {
+                $ret_str = str_replace($pattern, $control_character, $ret_str);
+            }
+        }
+
+
+        return $ret_str;
+    }
 }
