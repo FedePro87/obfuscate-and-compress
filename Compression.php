@@ -25,11 +25,11 @@ class Compression
         $data_length = strlen($data);
         $matches = RegexHelper::char_repetition_pattern($data);
 
-        //Desc sort $matches
         //key is pattern, value is how many times a pattern repeats.
         //is used to track previous patterns, and values in pattern is used to find where this pattern is positioned in $most_recurring_patterns
         $pattern_repeats = array();
 
+        //Desc sort $matches, considering first more occurring patterns.
         for ($i = 0; $i < count($matches); $i++) {
             $pattern = $matches[$i][0];
 
@@ -43,9 +43,9 @@ class Compression
         }
 
         //Take first 31, then flatten.
-        $slice_pattern_repeats = array_slice($pattern_repeats, 0, 31);
+        $pattern_repeats = array_slice($pattern_repeats, 0, 31);
         $more_recurring_patterns = array();
-        array_walk_recursive($slice_pattern_repeats, function ($repeats,$pattern) use (&$more_recurring_patterns) {
+        array_walk_recursive($pattern_repeats, function ($repeats, $pattern) use (&$more_recurring_patterns) {
             $more_recurring_patterns[] = $pattern;
         });
 

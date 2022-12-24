@@ -55,9 +55,8 @@ function check_data(string $data) : void
 
 }
 
-$data = "am生et lm生rem ipsu生m do生lm生r e生生t";
-// $data = "aaaaaaaaaaaaaaaaaaa ciao";
-$data = "lorem ipsum dolor sit amet";
+// $data = "am生et lm生rem ipsu生m do生lm生r e生生t";
+$data = "aaaaaaaaaaaaaaaaaaa ciao";
 echo "Data given : $data \n";
 
 check_data($data);
