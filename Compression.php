@@ -51,23 +51,12 @@ class Compression
 
         //Associate pattern with control character
         $control_characters = Ascii::get_excaped_control_characters();
-        $recurring_patterns_length = count($more_recurring_patterns);
-        $control_characters_association = array();
-        $considering_control_character = 0;
-
-        for ($i = 0; $i < $recurring_patterns_length; $i++) {
-            $pattern = $more_recurring_patterns[$i];
-
-            if (!key_exists($pattern, $control_characters_association)) {
-                $control_characters_association[$pattern] = $control_characters[$considering_control_character];
-                $considering_control_character++;
-            }
-        }
-
         $more_positions = 0;
         $pattern = "";
         $pattern_start = 0;
         $previous_char = "";
+        $control_characters_association = array();
+        $considering_control_character = 0;
 
         //Traverse string, find repeated chars, pick control character and sobstitute in $data
         for ($i = 0; $i < $data_length; $i++) {
@@ -103,6 +92,12 @@ class Compression
 
                 //pattern is done. check if it's in $more_recurring_patterns and substitute. Ignore space.
                 if (in_array($pattern, $more_recurring_patterns)) {
+
+                    if (!key_exists($pattern, $control_characters_association)) {
+                        $control_characters_association[$pattern] = $control_characters[$considering_control_character];
+                        $considering_control_character++;
+                    }
+
                     $control_character = $control_characters_association[$pattern];
 
                     //substitute starting with a offset of $pattern_start.
