@@ -6,7 +6,7 @@ class Crypto
 {
 
     /**
-     * Imaginatively arrange characters of a word in a square, removing all spaces then
+     * Imaginatively arrange characters of a word in a grid that has a length equal to $data radix, removing all spaces then
      * recompose words by selecting characters by columns
      * ex: given word "lorem ipsum dolor sit amet"  
      * 
@@ -14,10 +14,10 @@ class Crypto
      * lorem  
      * ipsum  
      * dolor  
-     * sit  
-     * amet  
+     * sitam  
+     * et  
      * 
-     * result: lidsa opoim rslte euot mmr
+     * result: lidse opoit rslt euoa mmrm
      * @param string $data
      * @return string crypt data
      */
